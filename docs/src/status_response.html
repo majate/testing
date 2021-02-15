@@ -36,6 +36,9 @@ BASE_URL = &#34;http://b134632ff51e.ngrok.io/&#34;
 
 
 class Status(Enum):
+    &#34;&#34;&#34;An enumeration representing the possible commit states defined by
+       the GitHub REST API.
+    &#34;&#34;&#34;
     success = &#34;success&#34;
     pending = &#34;pending&#34;
     error = &#34;error&#34;
@@ -43,13 +46,42 @@ class Status(Enum):
 
 
 class StatusType(Enum):
+    &#34;&#34;&#34;An enumeration representing the different commit contexts used by the
+       CI server.
+    &#34;&#34;&#34;
     compile = &#34;compile&#34;
     test = &#34;test&#34;
 
 
 class Status_response:
+    &#34;&#34;&#34;A class that generates POST requests for commit status updates via the
+       GitHub REST API from partial results of different steps of the CI server
+       workflow.
+    &#34;&#34;&#34;
 
     def __init__(self, return_code, context_type, sha, file):
+        &#34;&#34;&#34;Generates the POST request data, without sending the request.
+
+        Parameters
+        ----------
+        return_code : int
+            The return code of the subprocess that was run as part of the
+            CI server workflow step that should cause the commit update. A
+            `return_code` of value 10 indicates that the step is started without
+            being finished (this will set the commit state to pending).
+        context_type : StatusType member
+            A enum member of the `StatusType` enumeration representing which
+            context the status update concerns.
+        sha : str
+            The sha of the commit that should have its status updated.
+        file : str
+            The path to the log file corresponding to the output of the
+            subprocess. If no such file exist, set this value to the empty string.
+
+        Returns
+        ----------
+        None.
+        &#34;&#34;&#34;
         if context_type == StatusType.test:
             self.context = &#39;Test: &#39;
             self.state, self.description = self.__generate_test_response(return_code)
@@ -61,6 +93,10 @@ class Status_response:
         self.sha = sha
 
     def __generate_compile_response(self, return_code):
+        &#34;&#34;&#34;Convert return codes from flake8 to fitting commit states and
+           descriptions. If `return_code` has value 10, the state will be set
+           to pending.
+        &#34;&#34;&#34;
         if return_code == 0:
             return Status.success, &#34;All files passed successfully&#34;
         elif return_code == 1:
@@ -71,6 +107,10 @@ class Status_response:
             return Status.error, &#34;Something went wrong&#34;
 
     def __generate_test_response(self, return_code):
+        &#34;&#34;&#34;Convert return codes from pytest to fitting commit states and
+           descriptions. If `return_code` has value 10, the state will be set
+           to pending.
+        &#34;&#34;&#34;
         if return_code == 0:
             return Status.success, &#34;All tests were collected and passed successfully&#34;
         elif return_code == 1:
@@ -89,6 +129,14 @@ class Status_response:
             return Status.error, &#34;Something went wrong&#34;
 
     def send_status(self):
+        &#34;&#34;&#34;Sends the generated POST request to the GitHub REST API.
+
+        Returns
+        ----------
+        requests.Response
+            A `requests.Response` instance representing the response from the
+            GitHub REST API.
+        &#34;&#34;&#34;
         headers = {
             &#39;Accept&#39;: &#39;application/vnd.github.v3+json&#39;,
             &#39;Authorization&#39;: &#39;bearer &#39; + TOKEN
@@ -120,12 +168,16 @@ class Status_response:
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>An enumeration.</p></div>
+<div class="desc"><p>An enumeration representing the possible commit states defined by
+the GitHub REST API.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Status(Enum):
+    &#34;&#34;&#34;An enumeration representing the possible commit states defined by
+       the GitHub REST API.
+    &#34;&#34;&#34;
     success = &#34;success&#34;
     pending = &#34;pending&#34;
     error = &#34;error&#34;
@@ -160,12 +212,16 @@ class Status_response:
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>An enumeration.</p></div>
+<div class="desc"><p>An enumeration representing the different commit contexts used by the
+CI server.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class StatusType(Enum):
+    &#34;&#34;&#34;An enumeration representing the different commit contexts used by the
+       CI server.
+    &#34;&#34;&#34;
     compile = &#34;compile&#34;
     test = &#34;test&#34;</code></pre>
 </details>
@@ -190,14 +246,61 @@ class Status_response:
 <span>(</span><span>return_code, context_type, sha, file)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>A class that generates POST requests for commit status updates via the
+GitHub REST API from partial results of different steps of the CI server
+workflow.</p>
+<p>Generates the POST request data, without sending the request.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>return_code</code></strong> :&ensp;<code>int</code></dt>
+<dd>The return code of the subprocess that was run as part of the
+CI server workflow step that should cause the commit update. A
+<code>return_code</code> of value 10 indicates that the step is started without
+being finished (this will set the commit state to pending).</dd>
+<dt><strong><code>context_type</code></strong> :&ensp;<code><a title="src.status_response.StatusType" href="#src.status_response.StatusType">StatusType</a> member</code></dt>
+<dd>A enum member of the <code><a title="src.status_response.StatusType" href="#src.status_response.StatusType">StatusType</a></code> enumeration representing which
+context the status update concerns.</dd>
+<dt><strong><code>sha</code></strong> :&ensp;<code>str</code></dt>
+<dd>The sha of the commit that should have its status updated.</dd>
+<dt><strong><code>file</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path to the log file corresponding to the output of the
+subprocess. If no such file exist, set this value to the empty string.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>None.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Status_response:
+    &#34;&#34;&#34;A class that generates POST requests for commit status updates via the
+       GitHub REST API from partial results of different steps of the CI server
+       workflow.
+    &#34;&#34;&#34;
 
     def __init__(self, return_code, context_type, sha, file):
+        &#34;&#34;&#34;Generates the POST request data, without sending the request.
+
+        Parameters
+        ----------
+        return_code : int
+            The return code of the subprocess that was run as part of the
+            CI server workflow step that should cause the commit update. A
+            `return_code` of value 10 indicates that the step is started without
+            being finished (this will set the commit state to pending).
+        context_type : StatusType member
+            A enum member of the `StatusType` enumeration representing which
+            context the status update concerns.
+        sha : str
+            The sha of the commit that should have its status updated.
+        file : str
+            The path to the log file corresponding to the output of the
+            subprocess. If no such file exist, set this value to the empty string.
+
+        Returns
+        ----------
+        None.
+        &#34;&#34;&#34;
         if context_type == StatusType.test:
             self.context = &#39;Test: &#39;
             self.state, self.description = self.__generate_test_response(return_code)
@@ -209,6 +312,10 @@ class Status_response:
         self.sha = sha
 
     def __generate_compile_response(self, return_code):
+        &#34;&#34;&#34;Convert return codes from flake8 to fitting commit states and
+           descriptions. If `return_code` has value 10, the state will be set
+           to pending.
+        &#34;&#34;&#34;
         if return_code == 0:
             return Status.success, &#34;All files passed successfully&#34;
         elif return_code == 1:
@@ -219,6 +326,10 @@ class Status_response:
             return Status.error, &#34;Something went wrong&#34;
 
     def __generate_test_response(self, return_code):
+        &#34;&#34;&#34;Convert return codes from pytest to fitting commit states and
+           descriptions. If `return_code` has value 10, the state will be set
+           to pending.
+        &#34;&#34;&#34;
         if return_code == 0:
             return Status.success, &#34;All tests were collected and passed successfully&#34;
         elif return_code == 1:
@@ -237,6 +348,14 @@ class Status_response:
             return Status.error, &#34;Something went wrong&#34;
 
     def send_status(self):
+        &#34;&#34;&#34;Sends the generated POST request to the GitHub REST API.
+
+        Returns
+        ----------
+        requests.Response
+            A `requests.Response` instance representing the response from the
+            GitHub REST API.
+        &#34;&#34;&#34;
         headers = {
             &#39;Accept&#39;: &#39;application/vnd.github.v3+json&#39;,
             &#39;Authorization&#39;: &#39;bearer &#39; + TOKEN
@@ -259,12 +378,26 @@ class Status_response:
 <span>def <span class="ident">send_status</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Sends the generated POST request to the GitHub REST API.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>requests.Response</code></dt>
+<dd>A <code>requests.Response</code> instance representing the response from the
+GitHub REST API.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def send_status(self):
+    &#34;&#34;&#34;Sends the generated POST request to the GitHub REST API.
+
+    Returns
+    ----------
+    requests.Response
+        A `requests.Response` instance representing the response from the
+        GitHub REST API.
+    &#34;&#34;&#34;
     headers = {
         &#39;Accept&#39;: &#39;application/vnd.github.v3+json&#39;,
         &#39;Authorization&#39;: &#39;bearer &#39; + TOKEN

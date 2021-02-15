@@ -39,11 +39,13 @@ def readFile(name):
 
     Parameters
     ----------
-    name: A path to the file that should be read - A string.
+    name : str
+        A path to the file that should be read.
 
     Returns
     ----------
-    string: The content of the file.
+    str
+        The content of the file.
     &#34;&#34;&#34;
     with open(name) as f:
         file_content = f.read()
@@ -52,39 +54,62 @@ def readFile(name):
 
 @app.route(&#39;/logs_compile/&lt;name&gt;&#39;)
 def get_logfile_compile(name):
-    &#34;&#34;&#34;Show full flake8 output of a specific flake8 run.
+    &#34;&#34;&#34;A view function handling GET requests to the ``/logs_compile/&lt;name&gt;``
+       endpoint. Shows full flake8 output of a specific flake8 run.
 
     Parameters
     ----------
-    name: The name of the log-file corresponding to the specific flake8 run
-          on the format &#39;&lt;branch&gt;_&lt;sha&gt;.txt&#39; - A string.
+    name : str
+        The name of the log file corresponding to the specific flake8 run
+        on the format ``&lt;branch&gt;_&lt;sha&gt;.txt``.
 
     Returns
     ----------
-    string: The full output.
+    200 - OK
+        Response with payload of media type *text/html* including the plain text
+        output of the specified flake8 run.
+    500 -  Internal Server Error
+        If `name` does not correspond to the log file of a specific flake8 run.
     &#34;&#34;&#34;
     return readFile(&#34;./logs_compile/{}&#34;.format(name))
 
 
 @app.route(&#39;/logs_tests/&lt;name&gt;&#39;)
 def get_logfile_test(name):
-    &#34;&#34;&#34;Show full pytest output of a specific run of the tests.
+    &#34;&#34;&#34;A view function handling GET requests to the ``/logs_tests/&lt;name&gt;``
+       endpoint. Shows full pytest output of a specific run of the tests.
 
     Parameters
     ----------
-    name: The name of the log-file corresponding to the specific test run
-          on the format &#39;&lt;branch&gt;_&lt;sha&gt;.txt&#39; - A string.
+    name : str
+        The name of the log-file corresponding to the specific test run
+        on the format ``&lt;branch&gt;_&lt;sha&gt;.txt``.
 
     Returns
     ----------
-    string: The full output.
+    200 - OK
+        Response with payload of media type *text/html* including the plain text
+        output of the specified pytest run.
+    500 - Internal Server Error
+        If `name` does not correspond to the log file of a specific pytest run.
     &#34;&#34;&#34;
     return readFile(&#34;./logs_tests/{}&#34;.format(name))
 
 
 @app.route(&#39;/hook&#39;, methods=[&#39;POST&#39;])
 def webhook():
-    &#34;&#34;&#34;Default route for GitHub webhook. Gets called at every push to any branch.&#34;&#34;&#34;
+    &#34;&#34;&#34;A view function handling POST requests to the ``/hook`` endpoint. If the
+       request body is on the format of a GitHub push event (as defined by the
+       GitHub REST API), the CI server will be triggered to check the push.
+
+    Returns
+    ----------
+    200 - OK
+        If the CI server runs successfully. The response will include a
+        payload of media type *text/html* with the content &#34;success&#34;.
+    400 - Bad Request
+        If the request body is not on the format of a GitHub push event.
+    &#34;&#34;&#34;
     if request.headers[&#39;Content-Type&#39;] == &#39;application/json&#39;:
         data = ci_utils.parse(request.json)
         if &#39;error&#39; in data:
@@ -128,30 +153,45 @@ if __name__ == &#39;__main__&#39;:
 <span>def <span class="ident">get_logfile_compile</span></span>(<span>name)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Show full flake8 output of a specific flake8 run.</p>
+<div class="desc"><p>A view function handling GET requests to the <code>/logs_compile/&lt;name&gt;</code>
+endpoint. Shows full flake8 output of a specific flake8 run.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>name</code></strong> :&ensp;<code>The name</code> of <code>the log-file corresponding to the specific flake8 run</code></dt>
-<dd>on the format '<branch>_<sha>.txt' - A string.</dd>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>The name of the log file corresponding to the specific flake8 run
+on the format <code>&lt;branch&gt;_&lt;sha&gt;.txt</code>.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>string: The full output.</p></div>
+<dl>
+<dt><code>200 - OK</code></dt>
+<dd>Response with payload of media type <em>text/html</em> including the plain text
+output of the specified flake8 run.</dd>
+<dt><code>500 -
+Internal Server Error</code></dt>
+<dd>If <code>name</code> does not correspond to the log file of a specific flake8 run.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@app.route(&#39;/logs_compile/&lt;name&gt;&#39;)
 def get_logfile_compile(name):
-    &#34;&#34;&#34;Show full flake8 output of a specific flake8 run.
+    &#34;&#34;&#34;A view function handling GET requests to the ``/logs_compile/&lt;name&gt;``
+       endpoint. Shows full flake8 output of a specific flake8 run.
 
     Parameters
     ----------
-    name: The name of the log-file corresponding to the specific flake8 run
-          on the format &#39;&lt;branch&gt;_&lt;sha&gt;.txt&#39; - A string.
+    name : str
+        The name of the log file corresponding to the specific flake8 run
+        on the format ``&lt;branch&gt;_&lt;sha&gt;.txt``.
 
     Returns
     ----------
-    string: The full output.
+    200 - OK
+        Response with payload of media type *text/html* including the plain text
+        output of the specified flake8 run.
+    500 -  Internal Server Error
+        If `name` does not correspond to the log file of a specific flake8 run.
     &#34;&#34;&#34;
     return readFile(&#34;./logs_compile/{}&#34;.format(name))</code></pre>
 </details>
@@ -160,30 +200,44 @@ def get_logfile_compile(name):
 <span>def <span class="ident">get_logfile_test</span></span>(<span>name)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Show full pytest output of a specific run of the tests.</p>
+<div class="desc"><p>A view function handling GET requests to the <code>/logs_tests/&lt;name&gt;</code>
+endpoint. Shows full pytest output of a specific run of the tests.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>name</code></strong> :&ensp;<code>The name</code> of <code>the log-file corresponding to the specific test run</code></dt>
-<dd>on the format '<branch>_<sha>.txt' - A string.</dd>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>The name of the log-file corresponding to the specific test run
+on the format <code>&lt;branch&gt;_&lt;sha&gt;.txt</code>.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>string: The full output.</p></div>
+<dl>
+<dt><code>200 - OK</code></dt>
+<dd>Response with payload of media type <em>text/html</em> including the plain text
+output of the specified pytest run.</dd>
+<dt><code>500 - Internal Server Error</code></dt>
+<dd>If <code>name</code> does not correspond to the log file of a specific pytest run.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@app.route(&#39;/logs_tests/&lt;name&gt;&#39;)
 def get_logfile_test(name):
-    &#34;&#34;&#34;Show full pytest output of a specific run of the tests.
+    &#34;&#34;&#34;A view function handling GET requests to the ``/logs_tests/&lt;name&gt;``
+       endpoint. Shows full pytest output of a specific run of the tests.
 
     Parameters
     ----------
-    name: The name of the log-file corresponding to the specific test run
-          on the format &#39;&lt;branch&gt;_&lt;sha&gt;.txt&#39; - A string.
+    name : str
+        The name of the log-file corresponding to the specific test run
+        on the format ``&lt;branch&gt;_&lt;sha&gt;.txt``.
 
     Returns
     ----------
-    string: The full output.
+    200 - OK
+        Response with payload of media type *text/html* including the plain text
+        output of the specified pytest run.
+    500 - Internal Server Error
+        If `name` does not correspond to the log file of a specific pytest run.
     &#34;&#34;&#34;
     return readFile(&#34;./logs_tests/{}&#34;.format(name))</code></pre>
 </details>
@@ -194,9 +248,15 @@ def get_logfile_test(name):
 <dd>
 <div class="desc"><p>Get the content of a (non-binary) file.</p>
 <h2 id="parameters">Parameters</h2>
-<p>name: A path to the file that should be read - A string.</p>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>A path to the file that should be read.</dd>
+</dl>
 <h2 id="returns">Returns</h2>
-<p>string: The content of the file.</p></div>
+<dl>
+<dt><code>str</code></dt>
+<dd>The content of the file.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -206,11 +266,13 @@ def get_logfile_test(name):
 
     Parameters
     ----------
-    name: A path to the file that should be read - A string.
+    name : str
+        A path to the file that should be read.
 
     Returns
     ----------
-    string: The content of the file.
+    str
+        The content of the file.
     &#34;&#34;&#34;
     with open(name) as f:
         file_content = f.read()
@@ -221,14 +283,35 @@ def get_logfile_test(name):
 <span>def <span class="ident">webhook</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Default route for GitHub webhook. Gets called at every push to any branch.</p></div>
+<div class="desc"><p>A view function handling POST requests to the <code>/hook</code> endpoint. If the
+request body is on the format of a GitHub push event (as defined by the
+GitHub REST API), the CI server will be triggered to check the push.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>200 - OK</code></dt>
+<dd>If the CI server runs successfully. The response will include a
+payload of media type <em>text/html</em> with the content "success".</dd>
+<dt><code>400 - Bad Request</code></dt>
+<dd>If the request body is not on the format of a GitHub push event.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@app.route(&#39;/hook&#39;, methods=[&#39;POST&#39;])
 def webhook():
-    &#34;&#34;&#34;Default route for GitHub webhook. Gets called at every push to any branch.&#34;&#34;&#34;
+    &#34;&#34;&#34;A view function handling POST requests to the ``/hook`` endpoint. If the
+       request body is on the format of a GitHub push event (as defined by the
+       GitHub REST API), the CI server will be triggered to check the push.
+
+    Returns
+    ----------
+    200 - OK
+        If the CI server runs successfully. The response will include a
+        payload of media type *text/html* with the content &#34;success&#34;.
+    400 - Bad Request
+        If the request body is not on the format of a GitHub push event.
+    &#34;&#34;&#34;
     if request.headers[&#39;Content-Type&#39;] == &#39;application/json&#39;:
         data = ci_utils.parse(request.json)
         if &#39;error&#39; in data:

@@ -34,7 +34,24 @@ from status_response import Status_response, StatusType
 
 
 def parse(data):
-    &#34;&#34;&#34;Parse the json webhook input from github.&#34;&#34;&#34;
+    &#34;&#34;&#34;Parses the json request data from the GitHub webhook and extracts the
+       branch name and head commit sha of the push even that triggered the
+       webhook.
+
+    Parameters
+    ----------
+    data : dict
+        The dict representing the request data from the GitHub webhook.
+
+    Returns
+    ----------
+    res : dict
+        If the request data includes a branch name and a head commit sha in
+        the same format as specified in the GitHub REST API, `res[&#39;branch&#39;]`
+        will be set to the name of the branch (str) and `res[&#39;head_commit&#39;]`
+        will be set to the sha of the head commit (str). If important data is
+        missing in `data`, `res[&#39;error&#39;]` will be set to an error message (str).
+    &#34;&#34;&#34;
     res = {}
     # branch name
     if &#39;ref&#39; in data:
@@ -51,19 +68,47 @@ def parse(data):
 
 
 def change_dir(dir):
-    &#34;&#34;&#34;helper function to change dir&#34;&#34;&#34;
+    &#34;&#34;&#34;Changes the current working directory of the OS.
+
+    Parameters
+    ----------
+    dir : str
+        The path (relative or absolute) to the new directory.
+
+    Returns
+    ----------
+    None.
+    &#34;&#34;&#34;
     os.chdir(dir)
 
 
 def create_env_file():
-    &#34;&#34;&#34;Creates an environment file with a TOKEN constant.&#34;&#34;&#34;
+    &#34;&#34;&#34;Creates an environment file with the path ``src/env.py`` defining the
+       constant `TOKEN` as an empty string.
+
+    Returns
+    ----------
+    None.
+    &#34;&#34;&#34;
     f = open(&#39;src/env.py&#39;, &#39;w&#39;)
     f.write(&#39;TOKEN = \&#39;\&#39;\n&#39;)
     f.close()
 
 
 def setup_repo(branch):
-    &#34;&#34;&#34;clone the branch repo&#34;&#34;&#34;
+    &#34;&#34;&#34;Moves the OS to the directory ``./git_repo``, creates a dummy environment
+       file in that directory and sets the git repo state to the remote head
+       a specific branch.
+
+    Parameters
+    ----------
+    branch : str
+        The name of the branch that the working tree should be switched to.
+
+    Returns
+    ----------
+    None.
+    &#34;&#34;&#34;
     change_dir(&#39;./git_repo&#39;)
     create_env_file()
     cmd = [[&#39;git&#39;, &#39;fetch&#39;], [&#39;git&#39;, &#39;checkout&#39;, branch], [&#39;git&#39;, &#39;pull&#39;]]
@@ -81,18 +126,18 @@ def log_to_file(file, branch, sha, p):
 
     Parameters
     ----------
-    file: str
-        The path (in relation to the root directory) of the logfile.
-    branch: string
+    file : str
+        The path (in relation to the root directory) of the log file.
+    branch : str
         The name of the branch in which the commit is made.
-    sha: str
+    sha : str
         The commit sha of the repo state which the process was run in.
-    p: CompletedProcess object
-        The completed subprocess which stdout should be logged.
+    p : subprocess.CompletedProcess
+        The completed subprocess whose stdout should be logged.
 
     Returns
     ----------
-    None
+    None.
     &#34;&#34;&#34;
     with open(&#34;../&#34; + file, &#39;a+&#39;) as log:
         # print meta data about test run to the log
@@ -102,23 +147,24 @@ def log_to_file(file, branch, sha, p):
 
 
 def run_compile(branch, sha):
-    &#34;&#34;&#34;From the `git_repo` directory, run the linter tool flake8 on all the
+    &#34;&#34;&#34;From the ``git_repo`` directory, run the linter tool flake8 on all the
        files in the directory, ignoring E501 (too long lines). The flake8
-       output is logged to a file with the path &#39;logs_compile/&lt;branch&gt;_&lt;sha&gt;.txt&#39;,
-       where &lt;branch&gt; and &lt;sha&gt; are substituted to the `branch` and `sha`
+       output is logged to a file with the path ``logs_compile/&lt;branch&gt;_&lt;sha&gt;.txt``,
+       where ``&lt;branch&gt;`` and ``&lt;sha&gt;`` are substituted to the `branch` and `sha`
        arguments.
 
     Parameters
     ----------
-    branch: str
+    branch : str
         The name of the branch in which the commit is made.
-    sha: str
+    sha : str
         The commit sha of the repo state that should be analysed.
 
     Returns
     ----------
-    Status_response
-        A `src.status_response.Status_response` instance representing the result of the analysis.
+    status_response.Status_response
+        A `src.status_response.Status_response` instance representing the
+        result of the analysis.
     &#34;&#34;&#34;
     sub_proc = subprocess.run([&#39;python{}&#39;.format(sys.version[:3]), &#39;-m&#39;, &#39;flake8&#39;, &#39;--ignore=E501&#39;, &#39;../git_repo/&#39;], capture_output=True)
     file = &#34;logs_compile/{}_{}.txt&#34;.format(branch, sha)
@@ -127,23 +173,24 @@ def run_compile(branch, sha):
 
 
 def run_test(branch, sha):
-    &#34;&#34;&#34;Run all the tests within the current directory with pytest. The tests
-       must be written in files with names on the form &#39;test*.py&#39; or &#39;*test.py&#39;.
+    &#34;&#34;&#34;Runs all the tests within the current directory with pytest. The tests
+       must be written in files with names on the form ``test*.py`` or ``*test.py``.
        The pytest output is logged to a file with the path
-       &#39;logs_tests/&lt;branch&gt;_&lt;sha&gt;.txt&#39;, where &lt;branch&gt; and &lt;sha&gt; are
+       ``logs_tests/&lt;branch&gt;_&lt;sha&gt;.txt``, where ``&lt;branch&gt;`` and ``&lt;sha&gt;`` are
        substituted to the `branch` and `sha` arguments.
 
     Parameters
     ----------
-    branch: str
+    branch : str
         The name of the branch in which the commit is made.
-    sha: str
+    sha : str
         The commit sha of the repo state that should be tested.
 
     Returns
     ----------
-    `src.status_response.Status_response`
-        A Status_response instance representing the result of the test.
+    status_response.Status_response
+        A `src.status_response.Status_response` instance representing the
+        result of the test.
     &#34;&#34;&#34;
     sub_proc = subprocess.run([&#34;python3&#34;, &#34;-m&#34;, &#34;pytest&#34;], capture_output=True)
     file = &#34;logs_tests/{}_{}.txt&#34;.format(branch, sha)
@@ -162,13 +209,30 @@ def run_test(branch, sha):
 <span>def <span class="ident">change_dir</span></span>(<span>dir)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>helper function to change dir</p></div>
+<div class="desc"><p>Changes the current working directory of the OS.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>dir</code></strong> :&ensp;<code>str</code></dt>
+<dd>The path (relative or absolute) to the new directory.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>None.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def change_dir(dir):
-    &#34;&#34;&#34;helper function to change dir&#34;&#34;&#34;
+    &#34;&#34;&#34;Changes the current working directory of the OS.
+
+    Parameters
+    ----------
+    dir : str
+        The path (relative or absolute) to the new directory.
+
+    Returns
+    ----------
+    None.
+    &#34;&#34;&#34;
     os.chdir(dir)</code></pre>
 </details>
 </dd>
@@ -176,13 +240,22 @@ def run_test(branch, sha):
 <span>def <span class="ident">create_env_file</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Creates an environment file with a TOKEN constant.</p></div>
+<div class="desc"><p>Creates an environment file with the path <code>src/env.py</code> defining the
+constant <code>TOKEN</code> as an empty string.</p>
+<h2 id="returns">Returns</h2>
+<p>None.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def create_env_file():
-    &#34;&#34;&#34;Creates an environment file with a TOKEN constant.&#34;&#34;&#34;
+    &#34;&#34;&#34;Creates an environment file with the path ``src/env.py`` defining the
+       constant `TOKEN` as an empty string.
+
+    Returns
+    ----------
+    None.
+    &#34;&#34;&#34;
     f = open(&#39;src/env.py&#39;, &#39;w&#39;)
     f.write(&#39;TOKEN = \&#39;\&#39;\n&#39;)
     f.close()</code></pre>
@@ -198,19 +271,16 @@ corresponding to the subprocess.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>file</code></strong> :&ensp;<code>str</code></dt>
-<dd>The path (in relation to the root directory) of the logfile.</dd>
-<dt><strong><code>branch</code></strong> :&ensp;<code>string</code></dt>
+<dd>The path (in relation to the root directory) of the log file.</dd>
+<dt><strong><code>branch</code></strong> :&ensp;<code>str</code></dt>
 <dd>The name of the branch in which the commit is made.</dd>
 <dt><strong><code>sha</code></strong> :&ensp;<code>str</code></dt>
 <dd>The commit sha of the repo state which the process was run in.</dd>
-<dt><strong><code>p</code></strong> :&ensp;<code>CompletedProcess object</code></dt>
-<dd>The completed subprocess which stdout should be logged.</dd>
+<dt><strong><code>p</code></strong> :&ensp;<code>subprocess.CompletedProcess</code></dt>
+<dd>The completed subprocess whose stdout should be logged.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<dl>
-<dt><code>None</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
+<p>None.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -222,18 +292,18 @@ corresponding to the subprocess.</p>
 
     Parameters
     ----------
-    file: str
-        The path (in relation to the root directory) of the logfile.
-    branch: string
+    file : str
+        The path (in relation to the root directory) of the log file.
+    branch : str
         The name of the branch in which the commit is made.
-    sha: str
+    sha : str
         The commit sha of the repo state which the process was run in.
-    p: CompletedProcess object
-        The completed subprocess which stdout should be logged.
+    p : subprocess.CompletedProcess
+        The completed subprocess whose stdout should be logged.
 
     Returns
     ----------
-    None
+    None.
     &#34;&#34;&#34;
     with open(&#34;../&#34; + file, &#39;a+&#39;) as log:
         # print meta data about test run to the log
@@ -246,13 +316,46 @@ corresponding to the subprocess.</p>
 <span>def <span class="ident">parse</span></span>(<span>data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Parse the json webhook input from github.</p></div>
+<div class="desc"><p>Parses the json request data from the GitHub webhook and extracts the
+branch name and head commit sha of the push even that triggered the
+webhook.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>data</code></strong> :&ensp;<code>dict</code></dt>
+<dd>The dict representing the request data from the GitHub webhook.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><strong><code>res</code></strong> :&ensp;<code>dict</code></dt>
+<dd>If the request data includes a branch name and a head commit sha in
+the same format as specified in the GitHub REST API, <code>res['branch']</code>
+will be set to the name of the branch (str) and <code>res['head_commit']</code>
+will be set to the sha of the head commit (str). If important data is
+missing in <code>data</code>, <code>res['error']</code> will be set to an error message (str).</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def parse(data):
-    &#34;&#34;&#34;Parse the json webhook input from github.&#34;&#34;&#34;
+    &#34;&#34;&#34;Parses the json request data from the GitHub webhook and extracts the
+       branch name and head commit sha of the push even that triggered the
+       webhook.
+
+    Parameters
+    ----------
+    data : dict
+        The dict representing the request data from the GitHub webhook.
+
+    Returns
+    ----------
+    res : dict
+        If the request data includes a branch name and a head commit sha in
+        the same format as specified in the GitHub REST API, `res[&#39;branch&#39;]`
+        will be set to the name of the branch (str) and `res[&#39;head_commit&#39;]`
+        will be set to the sha of the head commit (str). If important data is
+        missing in `data`, `res[&#39;error&#39;]` will be set to an error message (str).
+    &#34;&#34;&#34;
     res = {}
     # branch name
     if &#39;ref&#39; in data:
@@ -274,8 +377,8 @@ corresponding to the subprocess.</p>
 <dd>
 <div class="desc"><p>From the <code>git_repo</code> directory, run the linter tool flake8 on all the
 files in the directory, ignoring E501 (too long lines). The flake8
-output is logged to a file with the path 'logs_compile/<branch>_<sha>.txt',
-where <branch> and <sha> are substituted to the <code>branch</code> and <code>sha</code>
+output is logged to a file with the path <code>logs_compile/&lt;branch&gt;_&lt;sha&gt;.txt</code>,
+where <code>&lt;branch&gt;</code> and <code>&lt;sha&gt;</code> are substituted to the <code>branch</code> and <code>sha</code>
 arguments.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -286,31 +389,33 @@ arguments.</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>Status_response</code></dt>
-<dd>A <code><a title="src.status_response.Status_response" href="status_response.html#src.status_response.Status_response">Status_response</a></code> instance representing the result of the analysis.</dd>
+<dt><code>status_response.Status_response</code></dt>
+<dd>A <code><a title="src.status_response.Status_response" href="status_response.html#src.status_response.Status_response">Status_response</a></code> instance representing the
+result of the analysis.</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def run_compile(branch, sha):
-    &#34;&#34;&#34;From the `git_repo` directory, run the linter tool flake8 on all the
+    &#34;&#34;&#34;From the ``git_repo`` directory, run the linter tool flake8 on all the
        files in the directory, ignoring E501 (too long lines). The flake8
-       output is logged to a file with the path &#39;logs_compile/&lt;branch&gt;_&lt;sha&gt;.txt&#39;,
-       where &lt;branch&gt; and &lt;sha&gt; are substituted to the `branch` and `sha`
+       output is logged to a file with the path ``logs_compile/&lt;branch&gt;_&lt;sha&gt;.txt``,
+       where ``&lt;branch&gt;`` and ``&lt;sha&gt;`` are substituted to the `branch` and `sha`
        arguments.
 
     Parameters
     ----------
-    branch: str
+    branch : str
         The name of the branch in which the commit is made.
-    sha: str
+    sha : str
         The commit sha of the repo state that should be analysed.
 
     Returns
     ----------
-    Status_response
-        A `src.status_response.Status_response` instance representing the result of the analysis.
+    status_response.Status_response
+        A `src.status_response.Status_response` instance representing the
+        result of the analysis.
     &#34;&#34;&#34;
     sub_proc = subprocess.run([&#39;python{}&#39;.format(sys.version[:3]), &#39;-m&#39;, &#39;flake8&#39;, &#39;--ignore=E501&#39;, &#39;../git_repo/&#39;], capture_output=True)
     file = &#34;logs_compile/{}_{}.txt&#34;.format(branch, sha)
@@ -322,10 +427,10 @@ arguments.</p>
 <span>def <span class="ident">run_test</span></span>(<span>branch, sha)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Run all the tests within the current directory with pytest. The tests
-must be written in files with names on the form 'test<em>.py' or '</em>test.py'.
+<div class="desc"><p>Runs all the tests within the current directory with pytest. The tests
+must be written in files with names on the form <code>test*.py</code> or <code>*test.py</code>.
 The pytest output is logged to a file with the path
-'logs_tests/<branch>_<sha>.txt', where <branch> and <sha> are
+<code>logs_tests/&lt;branch&gt;_&lt;sha&gt;.txt</code>, where <code>&lt;branch&gt;</code> and <code>&lt;sha&gt;</code> are
 substituted to the <code>branch</code> and <code>sha</code> arguments.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -335,30 +440,34 @@ substituted to the <code>branch</code> and <code>sha</code> arguments.</p>
 <dd>The commit sha of the repo state that should be tested.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p><code><a title="src.status_response.Status_response" href="status_response.html#src.status_response.Status_response">Status_response</a></code>
-A Status_response instance representing the result of the test.</p></div>
+<dl>
+<dt><code>status_response.Status_response</code></dt>
+<dd>A <code><a title="src.status_response.Status_response" href="status_response.html#src.status_response.Status_response">Status_response</a></code> instance representing the
+result of the test.</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def run_test(branch, sha):
-    &#34;&#34;&#34;Run all the tests within the current directory with pytest. The tests
-       must be written in files with names on the form &#39;test*.py&#39; or &#39;*test.py&#39;.
+    &#34;&#34;&#34;Runs all the tests within the current directory with pytest. The tests
+       must be written in files with names on the form ``test*.py`` or ``*test.py``.
        The pytest output is logged to a file with the path
-       &#39;logs_tests/&lt;branch&gt;_&lt;sha&gt;.txt&#39;, where &lt;branch&gt; and &lt;sha&gt; are
+       ``logs_tests/&lt;branch&gt;_&lt;sha&gt;.txt``, where ``&lt;branch&gt;`` and ``&lt;sha&gt;`` are
        substituted to the `branch` and `sha` arguments.
 
     Parameters
     ----------
-    branch: str
+    branch : str
         The name of the branch in which the commit is made.
-    sha: str
+    sha : str
         The commit sha of the repo state that should be tested.
 
     Returns
     ----------
-    `src.status_response.Status_response`
-        A Status_response instance representing the result of the test.
+    status_response.Status_response
+        A `src.status_response.Status_response` instance representing the
+        result of the test.
     &#34;&#34;&#34;
     sub_proc = subprocess.run([&#34;python3&#34;, &#34;-m&#34;, &#34;pytest&#34;], capture_output=True)
     file = &#34;logs_tests/{}_{}.txt&#34;.format(branch, sha)
@@ -370,13 +479,34 @@ A Status_response instance representing the result of the test.</p></div>
 <span>def <span class="ident">setup_repo</span></span>(<span>branch)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>clone the branch repo</p></div>
+<div class="desc"><p>Moves the OS to the directory <code>./git_repo</code>, creates a dummy environment
+file in that directory and sets the git repo state to the remote head
+a specific branch.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>branch</code></strong> :&ensp;<code>str</code></dt>
+<dd>The name of the branch that the working tree should be switched to.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<p>None.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def setup_repo(branch):
-    &#34;&#34;&#34;clone the branch repo&#34;&#34;&#34;
+    &#34;&#34;&#34;Moves the OS to the directory ``./git_repo``, creates a dummy environment
+       file in that directory and sets the git repo state to the remote head
+       a specific branch.
+
+    Parameters
+    ----------
+    branch : str
+        The name of the branch that the working tree should be switched to.
+
+    Returns
+    ----------
+    None.
+    &#34;&#34;&#34;
     change_dir(&#39;./git_repo&#39;)
     create_env_file()
     cmd = [[&#39;git&#39;, &#39;fetch&#39;], [&#39;git&#39;, &#39;checkout&#39;, branch], [&#39;git&#39;, &#39;pull&#39;]]
